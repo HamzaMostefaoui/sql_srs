@@ -1,58 +1,46 @@
 # pylint: disable=missing-module-docstring
 
-import io
-
+import os
+import logging
 import duckdb
-import pandas as pd
 import streamlit as st
 
-CSV = """
-Beverage,Price
-Orange juice,2
-Expresso,2
-Tea,3
-"""
+if "data" not in os.listdir():
+    logging.error(os.listdir())
+    logging.error("creating folder data")
+    os.mkdir("data")
 
-beverages = pd.read_csv(io.StringIO(CSV))
-beverages = pd.DataFrame(beverages)
+if "exercises_sql_tables.duckdb" not in os.listdir("data"):
+    exec(open("init_db.py").read())
+con = duckdb.connect(database="data/exercises_sql_tables.duckdb",read_only=False)
 
-CSV2 = """
-Food_item,Food_price
-Cookie,2
-Chocolatine,2
-Muffin,3
-"""
-
-food_items = pd.read_csv(io.StringIO(CSV2))
-food_items = pd.DataFrame(food_items)
-
+#solution_df = duckdb.query(ANSWER_STR).df()
 
 st.title("SQL SRS")
 st.header("Spaced Repetion System SQL practice")
 
 with st.sidebar:
-    option = st.selectbox(
+    theme = st.selectbox(
         "What would you like to review would you like to review ?",
-        ("Joins", "GroupBy", "Window Functions"),
+        ("cross_joins", "GroupBy", "Window Functions"),
         index=None,
         placeholder="Select a theme",
     )
+    st.write("You selected:", theme)
 
-    st.write("You selected:", option)
 
-ANSWER_STR = """
-SELECT * FROM beverages \n
-CROSS JOIN food_items
-"""
-
-solution_df = duckdb.query(ANSWER_STR).df()
+    exercise = con.execute(f"SELECT * FROM memory_state WHERE theme = '{theme}'").df().sort_values("last_reviewed").reset_index()
+    st.write(exercise)
+    exercise_name = exercise.loc[0, 'exercise_name']
+    with open(f"answers/{exercise_name}.sql", "r") as f:
+        answer = f.read()
+    solution_df = con.execute(answer).df()
 
 
 user_query = st.text_area(label="Enter your query :", placeholder="Your SQL code...")
 if user_query:
-    result = duckdb.query(user_query).df()
+    result = con.execute(user_query).df()
     st.dataframe(result)
-
     try:
         result = result[solution_df.columns]
         st.dataframe(result.compare(solution_df))
@@ -61,18 +49,20 @@ if user_query:
 
     n_lines_differences = result.shape[0] - solution_df.shape[0]
     if result.shape[0] != solution_df.shape[0]:
-        st.write(
-            f"Your result has {n_lines_differences} lines differences with the solution   "
-        )
-
+        st.write(f"Your result has {n_lines_differences} lines differences with the solution")
 
 tab1, tab2 = st.tabs(["Tables", "Solution"])
 
 with tab1:
-    st.write("beverages")
-    st.dataframe(beverages)
-    st.write("food_items")
-    st.dataframe(food_items)
+    exercises_tables = exercise.loc[0,"tables"]
+    for table in exercises_tables:
+        df_table = con.execute(f"SELECT * FROM {table}")
+        st.dataframe(df_table)
+
 
 with tab2:
-    st.write(ANSWER_STR)
+    exercise_name = exercise.loc[0,'exercise_name']
+    with open(f"answers/{exercise_name}.sql","r") as f:
+        answer = f.read()
+    st.write(answer)
+
