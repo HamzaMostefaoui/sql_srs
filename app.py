@@ -1,10 +1,14 @@
 # pylint: disable=missing-module-docstring
 
 import io
+from gettext import Catalog
 
 import duckdb
 import pandas as pd
 import streamlit as st
+import ast
+
+from duckdb.duckdb import CatalogException, BinderException
 
 con = duckdb.connect(database="data/exercises_sql_tables.duckdb",read_only=False)
 
@@ -27,9 +31,16 @@ with st.sidebar:
 
 
 user_query = st.text_area(label="Enter your query :", placeholder="Your SQL code...")
-# if user_query
-#     result = duckdb.query(user_query).df()
-#     st.dataframe(result)
+if user_query:
+    try:
+     result = con.execute(user_query)
+     st.dataframe(result)
+    except CatalogException as e:
+        st.error("Unknown table please try again")
+    except BinderException as e:
+        st.error("Unknown column please try again")
+
+
 #
 #     try:
 #         result = result[solution_df.columns]
@@ -44,14 +55,18 @@ user_query = st.text_area(label="Enter your query :", placeholder="Your SQL code
 #         )
 #
 #
-# tab1, tab2 = st.tabs(["Tables", "Solution"])
-#
-# with tab1:
-#     st.write("beverages")
-#     st.dataframe(beverages)
-#     st.write("food_items")
-#     st.dataframe(food_items)
-#
-# with tab2:
-#     st.write(ANSWER_STR)
+tab1, tab2 = st.tabs(["Tables", "Solution"])
+
+with tab1:
+    exercises_tables = ast.literal_eval(exercise.loc[0,"tables"])
+    for table in exercises_tables:
+        df_table = con.execute(f"SELECT * FROM {table}")
+        st.dataframe(df_table)
+
+
+with tab2:
+    exercise_name = exercise.loc[0,'exercise_name']
+    with open(f"answers/{exercise_name}.sql","r") as f:
+        answer = f.read()
+    st.write(answer)
 
