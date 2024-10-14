@@ -1,15 +1,17 @@
 # pylint: disable=missing-module-docstring
 
-import io
-from gettext import Catalog
-
+import os
+import logging
 import duckdb
-import pandas as pd
 import streamlit as st
-import ast
 
-from duckdb.duckdb import CatalogException, BinderException
+if "data" not in os.listdir():
+    logging.error(os.listdir())
+    logging.error("creating folder data")
+    os.mkdir("data")
 
+if "exercises_sql_tables.duckdb" not in os.listdir("data"):
+    exec(open("init_db.py").read())
 con = duckdb.connect(database="data/exercises_sql_tables.duckdb",read_only=False)
 
 #solution_df = duckdb.query(ANSWER_STR).df()
