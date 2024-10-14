@@ -26,35 +26,29 @@ with st.sidebar:
     )
     st.write("You selected:", theme)
 
+
     exercise = con.execute(f"SELECT * FROM memory_state WHERE theme = '{theme}'").df()
     st.write(exercise)
+    exercise_name = exercise.loc[0, 'exercise_name']
+    with open(f"answers/{exercise_name}.sql", "r") as f:
+        answer = f.read()
+    solution_df = con.execute(answer).df()
 
 
 user_query = st.text_area(label="Enter your query :", placeholder="Your SQL code...")
 if user_query:
+    result = con.execute(user_query).df()
+    st.dataframe(result)
     try:
-     result = con.execute(user_query)
-     st.dataframe(result)
-    except CatalogException as e:
-        st.error("Unknown table please try again")
-    except BinderException as e:
-        st.error("Unknown column please try again")
+        result = result[solution_df.columns]
+        st.dataframe(result.compare(solution_df))
+    except KeyError as e:
+        st.write("Some columns are missing")
 
+    n_lines_differences = result.shape[0] - solution_df.shape[0]
+    if result.shape[0] != solution_df.shape[0]:
+        st.write(f"Your result has {n_lines_differences} lines differences with the solution")
 
-#
-#     try:
-#         result = result[solution_df.columns]
-#         st.dataframe(result.compare(solution_df))
-#     except KeyError as e:
-#         st.write("Some columns are missing")
-#
-#     n_lines_differences = result.shape[0] - solution_df.shape[0]
-#     if result.shape[0] != solution_df.shape[0]:
-#         st.write(
-#             f"Your result has {n_lines_differences} lines differences with the solution   "
-#         )
-#
-#
 tab1, tab2 = st.tabs(["Tables", "Solution"])
 
 with tab1:
