@@ -57,7 +57,7 @@ con.execute("CREATE TABLE IF NOT EXISTS sizes AS SELECT * FROM sizes ")
 
 TRADEMARKS_CSV = """
 trademark
-Nike
+Reebok
 Asphalte
 Abercrombie
 Lewis
