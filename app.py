@@ -19,8 +19,8 @@ if "exercises_sql_tables.duckdb" not in os.listdir("data"):
     exec(open("init_db.py").read())
 
 
-
 # -----------Functions-----------
+
 
 def display_available_themes(connection):
     """
@@ -31,6 +31,7 @@ def display_available_themes(connection):
     available_themes = connection.execute("SELECT DISTINCT theme FROM memory_state")
     return available_themes
 
+
 def display_exercise(connection, selected_theme=None):
     if selected_theme:
         memory_query = f"SELECT * FROM memory_state WHERE theme = '{selected_theme}' ORDER BY last_reviewed"
@@ -38,7 +39,7 @@ def display_exercise(connection, selected_theme=None):
         memory_query = "SELECT * FROM memory_state ORDER BY last_reviewed"
 
     oldest_exercise_name = connection.execute(memory_query).df()
-    exercise_name = oldest_exercise_name.loc[0,"exercise_name"]
+    exercise_name = oldest_exercise_name.loc[0, "exercise_name"]
 
     return exercise_name
 
@@ -52,7 +53,7 @@ def display_tables(connection, exercise):
 
     memory_query = f"SELECT * FROM memory_state WHERE exercise_name = '{exercise}'"
     oldest_exercise_tables = connection.execute(memory_query).df()
-    exercise_tables = oldest_exercise_tables.loc[0,"tables"]
+    exercise_tables = oldest_exercise_tables.loc[0, "tables"]
 
     for table in exercise_tables:
         st.write(table)
@@ -60,7 +61,7 @@ def display_tables(connection, exercise):
         st.dataframe(df_exercise_table)
 
 
-def exercise_solution_df(connection,exercise_name):
+def exercise_solution_df(connection, exercise_name):
 
     with open(f"answers/{exercise_name}.sql", "r") as f:
         answer = f.read()
@@ -68,15 +69,18 @@ def exercise_solution_df(connection,exercise_name):
     solution_df = con.execute(answer).df()
     return solution_df
 
-def exercise_solution_text(connection,exercise_name):
+
+def exercise_solution_text(connection, exercise_name):
     with open(f"answers/{exercise_name}.sql", "r") as f:
         answer = f.read()
 
     return st.write(answer)
 
+
 def display_user_query(connection, user_query):
     result = connection.execute(user_query).df()
     return result
+
 
 def user_query_validation(connection, user_query, exercise_name):
     user_result = display_user_query(connection, user_query)
@@ -95,9 +99,12 @@ def user_query_validation(connection, user_query, exercise_name):
 
     n_lines_difference = user_result.shape[0] - solution_df.shape[0]
     if n_lines_difference != 0:
-        st.error(f"Result has a {n_lines_difference} line(s) difference with the solution.")
+        st.error(
+            f"Result has a {n_lines_difference} line(s) difference with the solution."
+        )
 
     return user_result
+
 
 def repetion_system(exercise_name):
     cols = st.columns(3)
@@ -130,25 +137,25 @@ with st.sidebar:
         placeholder="Select a theme...",
     )
     st.write(f"You selected {user_selection}")
-user_exercise = display_exercise(con,user_selection)
+user_exercise = display_exercise(con, user_selection)
 
 with st.sidebar:
-    display_tables(con,user_exercise)
+    display_tables(con, user_exercise)
 
 form = st.form("my_form")
-query = form.text_area(label = "Type your code", placeholder="your SQL query...", key="user_input")
+query = form.text_area(
+    label="Type your code", placeholder="your SQL query...", key="user_input"
+)
 form.form_submit_button("Submit")
 
 
-
-tab1, tab2, tab3 = st.tabs(["Your query","Expected result", "Solution"])
+tab1, tab2, tab3 = st.tabs(["Your query", "Expected result", "Solution"])
 
 
 with tab1:
     if query:
-        user_query_validation(con,query,user_exercise)
+        user_query_validation(con, query, user_exercise)
         st.dataframe(display_user_query(con, query))
-
 
 
 with tab2:
@@ -156,26 +163,8 @@ with tab2:
 
 with tab3:
 
-    st.warning('Did you tried your best before looking at it ?', icon="⚠️")
+    st.warning("Did you tried your best before looking at it ?", icon="⚠️")
     on = st.toggle("See the solution")
 
     if on:
-       exercise_solution_text(con, user_exercise)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        exercise_solution_text(con, user_exercise)
