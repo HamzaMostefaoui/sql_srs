@@ -3,7 +3,6 @@
 import logging
 import os
 from datetime import date, timedelta
-from zoneinfo import available_timezones
 
 import duckdb
 import streamlit as st
@@ -64,7 +63,7 @@ def display_tables(connection, exercise):
         st.dataframe(df_exercise_table)
 
 
-def exercise_solution_df(connection, exercise_name):
+def exercise_solution_df(exercise_name):
 
     with open(f"answers/{exercise_name}.sql", "r") as f:
         answer = f.read()
@@ -73,7 +72,7 @@ def exercise_solution_df(connection, exercise_name):
     return solution_df
 
 
-def exercise_solution_text(connection, exercise_name):
+def exercise_solution_text(exercise_name):
     with open(f"answers/{exercise_name}.sql", "r") as f:
         answer = f.read()
 
@@ -87,7 +86,7 @@ def display_user_query(connection, user_query):
 
 def user_query_validation(connection, user_query, exercise_name):
     user_result = display_user_query(connection, user_query)
-    solution_df = exercise_solution_df(connection, exercise_name)
+    solution_df = exercise_solution_df(exercise_name)
 
     try:
         user_result = user_result[solution_df.columns]
@@ -160,7 +159,7 @@ with tab1:
 
 
 with tab2:
-    st.dataframe(exercise_solution_df(con, user_exercise))
+    st.dataframe(exercise_solution_df(user_exercise))
 
 with tab3:
 
@@ -168,4 +167,4 @@ with tab3:
     on = st.toggle("See the solution")
 
     if on:
-        exercise_solution_text(con, user_exercise)
+        exercise_solution_text(user_exercise)
