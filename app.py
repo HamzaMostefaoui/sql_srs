@@ -1,11 +1,12 @@
 # pylint: disable=missing-module-docstring
 
-import os
 import logging
+import os
+from datetime import date, timedelta
+from zoneinfo import available_timezones
 
 import duckdb
 import streamlit as st
-from datetime import date, timedelta
 
 # -------Creation of data folder-----------
 
@@ -28,7 +29,9 @@ def display_available_themes(connection):
     :param connection: connection to DB
     :return: selected_theme
     """
-    available_themes = connection.execute("SELECT DISTINCT theme FROM memory_state")
+    available_themes = connection.execute(
+        "SELECT DISTINCT theme FROM memory_state"
+    ).df()
     return available_themes
 
 
@@ -130,11 +133,9 @@ st.title("SQL SRS")
 st.header("Spaced Repetion System")
 
 with st.sidebar:
-    user_selection = st.selectbox(
-        "What would you like to review?",
+    user_selection = st.radio(
+        "Select a theme",
         display_available_themes(con),
-        index=None,
-        placeholder="Select a theme...",
     )
     st.write(f"You selected {user_selection}")
 user_exercise = display_exercise(con, user_selection)
